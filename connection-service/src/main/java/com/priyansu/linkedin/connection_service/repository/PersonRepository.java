@@ -8,11 +8,12 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PersonRepository extends Neo4jRepository<Person, Long> {
-    Optional<Person> getByName(String name);
+
+    Optional<Person> findByUserId(Long userId);
 
     @Query("""
-           MATCH (personA:Person) -[CONNECTED_TO]- (personB:Person)
-           WHERE personA.userId = $userId RETURN personB
-            """)
+           MATCH (personA:Person {userId:$userId})-[:CONNECTED_TO]->(personB:Person)
+           RETURN personB
+           """)
     List<Person> getFirstDegreeConnections(Long userId);
 }

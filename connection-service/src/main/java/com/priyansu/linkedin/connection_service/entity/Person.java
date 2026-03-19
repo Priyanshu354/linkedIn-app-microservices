@@ -1,13 +1,15 @@
 package com.priyansu.linkedin.connection_service.entity;
 
 import lombok.Data;
-import org.springframework.data.neo4j.core.schema.GeneratedValue;
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Node
 @Data
 public class Person {
+
     @Id
     @GeneratedValue
     private Long id;
@@ -15,4 +17,7 @@ public class Person {
     private Long userId;
 
     private String name;
+
+    @Relationship(type = "CONNECTED_TO", direction = Relationship.Direction.OUTGOING)
+    private Set<Person> connections = new HashSet<>();
 }
