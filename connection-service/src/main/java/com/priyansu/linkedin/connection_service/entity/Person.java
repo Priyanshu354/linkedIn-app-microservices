@@ -17,7 +17,4 @@ public class Person {
     private Long userId;
 
     private String name;
-
-    @Relationship(type = "CONNECTED_TO", direction = Relationship.Direction.OUTGOING)
-    private Set<Person> connections = new HashSet<>();
 }

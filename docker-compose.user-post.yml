@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  user-db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=userDB
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    networks:
+      - linkedin-network
+
+  post-db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=postDB
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    networks:
+      - linkedin-network
+
+  user-service:
+    image: priyanshuraj354/linkedin-app/user-service:latest
+    depends_on:
+      - user-db
+    networks:
+      - linkedin-network
+
+  post-service:
+    image: priyanshuraj354/linkedin-app/post-service:latest
+    depends_on:
+      - post-db
+    networks:
+      - linkedin-network
+
+networks:
+  linkedin-network:
+    external: true

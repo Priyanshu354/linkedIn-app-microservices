@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8085
 
 spring:
   application:
@@ -32,9 +32,9 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://discovery-server:8761/eureka
   instance:
-    hostname: localhost
+    hostname: discovery-server
 
 jwt:
-  secretKey=a;fkdsfirnafsanajganfugrpgj4ng9-pqw4fg-rngjsr08ue;gbs-rep;gus;9watgb:
+  secretKey: a;fkdsfirnafsanajganfugrpgj4ng9-pqw4fg-rngjsr08ue;gbs-rep;gus;9watgb

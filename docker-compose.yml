@@ -1,0 +1,156 @@
+version: "3.8"
+
+services:
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/bitnami/kafka
+    networks:
+      - linkedin-network
+
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8085:8080"
+    depends_on:
+      - kafka
+    networks:
+      - linkedin-network
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+
+  notification-db:
+    image: postgres
+    container_name: notification-db
+    environment:
+      - POSTGRES_DB=notificationDB
+      - POSTGRES_USER=user
+      - POSTGRES-PASSWORD=password
+    networks:
+      - linkedin-network
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+
+  post-db:
+    image: postgres
+    container_name: post-db
+    environment:
+      - POSTGRES_DB=postDB
+      - POSTGRES_USER=user
+      - POSTGRES-PASSWORD=password
+    networks:
+      - linkedin-network
+    volumes:
+      - post-db-data:/var/lib/postgresql/data
+
+  user-db:
+    image: postgres
+    container_name: user-db
+    environment:
+      - POSTGRES_DB=userDB
+      - POSTGRES_USER=user
+      - POSTGRES-PASSWORD=password
+    networks:
+      - linkedin-network
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+
+  connection-db:
+    image: neo4j
+    container_name: connection-db
+    environment:
+      - NEO4J_AUTH=neo4j/password
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - connection-db-data:/data
+    networks:
+      - linkedin-network
+
+  discover-server:
+    image: priyanshuraj354/linkedin-app/discovery-service:latest
+    container_name: discovery-server
+    networks:
+      - linkedin-network
+    ports:
+      - "8761:8761"
+
+
+  notification-service:
+    image: priyanshuraj354/linkedin-app/notification-service:latest
+    container_name: notification-service
+    networks:
+      - linkedin-network
+    depends_on:
+      - discover-server
+      - notification-db
+      - kafka
+
+  post-service:
+    image: priyanshuraj354/linkedin-app/post-service:latest
+    container_name: post-service
+    networks:
+      - linkedin-network
+    depends_on:
+      - discover-server
+      - post-db
+      - kafka
+
+  user-service:
+    image: priyanshuraj354/linkedin-app/user-service:latest
+    container_name: user-service
+    networks:
+      - linkedin-network
+    depends_on:
+      - discover-server
+      - user-db
+      - kafka
+
+  connection-service:
+    image: priyanshuraj354/linkedin-app/connection-service:latest
+    container_name: connection-service
+    networks:
+      - linkedin-network
+    depends_on:
+      - discover-server
+      - connection-db
+      - kafka
+
+  api-gateway:
+    image: priyanshuraj354/linkedin-app/api-gateway:latest
+    container_name: api-gateway
+    networks:
+      - linkedin-network
+    depends_on:
+      - discover-server
+
+volumes:
+  kafka_data:
+  post-db-data:
+  user-db-data:
+  notification-db-data:
+  connection-db-data:
+
+networks:
+  linkedin-network:

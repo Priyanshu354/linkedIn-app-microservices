@@ -1,5 +1,6 @@
 package com.priyanshu.linkedin.post_service.controller;
 
+import com.priyanshu.linkedin.post_service.auth.UserContextHoler;
 import com.priyanshu.linkedin.post_service.dto.PostCreateRequestDto;
 import com.priyanshu.linkedin.post_service.dto.PostDto;
 import com.priyanshu.linkedin.post_service.service.PostService;
@@ -20,7 +21,7 @@ public class PostController {
 
     @PostMapping
     ResponseEntity<PostDto> createPost(@RequestBody PostCreateRequestDto postCreateRequestDto, HttpServletRequest request) {
-        PostDto postDto = postService.createPost(postCreateRequestDto, 1L);
+        PostDto postDto = postService.createPost(postCreateRequestDto, UserContextHoler.getCurrentUserId());
         return new ResponseEntity<>(postDto,HttpStatus.CREATED);
     }
 

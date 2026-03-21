@@ -1,5 +1,6 @@
 package com.priyanshu.linkedin.post_service.controller;
 
+import com.priyanshu.linkedin.post_service.auth.UserContextHoler;
 import com.priyanshu.linkedin.post_service.service.PostLikeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -15,13 +16,13 @@ public class PostLikeController {
 
     @PostMapping("/{postId}")
     ResponseEntity<Void> likePost(@PathVariable Long postId, HttpServletRequest request) {
-        postLikeService.likePost(postId, 1L);
+        postLikeService.likePost(postId, UserContextHoler.getCurrentUserId());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{postId}")
     ResponseEntity<Void> disLikePost(@PathVariable Long postId, HttpServletRequest request) {
-        postLikeService.disLikePost(postId, 1L);
+        postLikeService.disLikePost(postId, UserContextHoler.getCurrentUserId());
         return ResponseEntity.noContent().build();
     }
 }

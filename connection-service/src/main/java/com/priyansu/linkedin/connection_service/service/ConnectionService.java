@@ -1,9 +1,14 @@
 package com.priyansu.linkedin.connection_service.service;
 
+import com.priyansu.linkedin.connection_service.auth.UserContextHoler;
 import com.priyansu.linkedin.connection_service.entity.Person;
+import com.priyansu.linkedin.connection_service.event.AcceptConnectionRequestEvent;
+import com.priyansu.linkedin.connection_service.event.SendConnectionRequestEvent;
 import com.priyansu.linkedin.connection_service.repository.PersonRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,45 +19,77 @@ import java.util.List;
 public class ConnectionService {
 
     private final PersonRepository personRepository;
+    private final KafkaTemplate<Long, SendConnectionRequestEvent> sendConnectionKafkaTemplate;
+    private final KafkaTemplate<Long, AcceptConnectionRequestEvent> acceptConnectionKafkaTemplate;
 
     public List<Person> getFirstDegreeConnection(Long userId) {
         return personRepository.getFirstDegreeConnections(userId);
     }
 
-    public void connectionRequest(Long userId) {
-        log.info("Attempt to request sent to userId: {}", userId);
-        // store request in PostgreSQL later
+    public boolean connectionRequest(Long receiverId) {
+        log.info("Attempt to request sent to userId: {}", receiverId);
+        Long senderId = UserContextHoler.getCurrentUserId();
+
+        if(senderId.equals(receiverId)) {
+            throw new RuntimeException("can't send connection to your own id");
+        }
+
+        boolean alreadyRequested = personRepository.connectionRequestExist(senderId, receiverId);
+
+        if(alreadyRequested) {
+            throw new RuntimeException("Connection request already exist");
+        }
+
+        boolean alreadyConnected = personRepository.connectionRequestExist(senderId, receiverId);
+
+        if(alreadyConnected) {
+            throw new RuntimeException("Already connected");
+        }
+
+        personRepository.addConnectionRequest(senderId, receiverId);
+        log.info("Connection request successfully sent");
+
+        SendConnectionRequestEvent sendConnectionRequestEvent = SendConnectionRequestEvent.builder()
+                .senderId(senderId)
+                .receiverId(receiverId)
+                .build();
+
+        sendConnectionKafkaTemplate.send("send-connection-request-topic", sendConnectionRequestEvent);
+        return true;
     }
 
-    public void acceptConnection(Long senderUserId, Long receiverUserId) {
+    public boolean acceptConnection(Long senderUserId, Long receiverUserId) {
         log.info("accept connection service hit {}, {}", senderUserId, receiverUserId);
 
-        Person sender = personRepository.findByUserId(senderUserId)
-                .orElseGet(() -> {
-                    Person p = new Person();
-                    p.setUserId(senderUserId);
-                    p.setName("User-" + senderUserId);
-                    return personRepository.save(p);
-                });
+        boolean alreadyRequested = personRepository.connectionRequestExist(senderUserId, receiverUserId);
 
-        Person receiver = personRepository.findByUserId(receiverUserId)
-                .orElseGet(() -> {
-                    Person p = new Person();
-                    p.setUserId(receiverUserId);
-                    p.setName("User-" + receiverUserId);
-                    return personRepository.save(p);
-                });
+        if(!alreadyRequested) {
+            throw new RuntimeException("Connection request doesn't exist");
+        }
 
-        log.info("accept connection service first check pass {}, {}", senderUserId, receiverUserId);
+        personRepository.acceptedConnectionRequest(senderUserId, receiverUserId);
 
-        sender.getConnections().add(receiver);
-        receiver.getConnections().add(sender);
+        AcceptConnectionRequestEvent acceptConnectionRequestEvent = AcceptConnectionRequestEvent.builder()
+                .senderId(senderUserId)
+                .receiverId(receiverUserId)
+                .build();
 
-        log.info("accept connection service connection saved {}, {}", senderUserId, receiverUserId);
-
-        personRepository.save(sender);
-        personRepository.save(receiver);
+        acceptConnectionKafkaTemplate.send("accept-connection-request-topic", acceptConnectionRequestEvent);
 
         log.info("Connection created between {} and {}", senderUserId, receiverUserId);
+        return true;
+    }
+
+    public Boolean rejectRequest(Long senderId) {
+        Long receiverId = UserContextHoler.getCurrentUserId();
+
+        boolean alreadyRequested = personRepository.connectionRequestExist(senderId, receiverId);
+
+        if(!alreadyRequested) {
+            throw new RuntimeException("Connection request doesn't exist");
+        }
+
+        personRepository.rejectConnectionRequest(senderId,receiverId);
+        return true;
     }
 }

@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  discover-server:
+    image: priyanshuraj354/linkedin-app/discovery-service:latest
+    ports:
+      - "8761:8761"
+    networks:
+      - linkedin-network
+
+  api-gateway:
+    image: priyanshuraj354/linkedin-app/api-gateway:latest
+    depends_on:
+      - discover-server
+    networks:
+      - linkedin-network
+
+  connection-db:
+    image: neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/password
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    networks:
+      - linkedin-network
+
+  connection-service:
+    image: priyanshuraj354/linkedin-app/connection-service:latest
+    depends_on:
+      - connection-db
+    networks:
+      - linkedin-network
+
+networks:
+  linkedin-network:
+    external: true
