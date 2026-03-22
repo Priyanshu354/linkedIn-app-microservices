@@ -1,79 +1,77 @@
-version: "3.8"
-
 services:
+
   kafka:
     image: apache/kafka:3.7.0
     container_name: kafka
     ports:
       - "9092:9092"
-    volumes:
-      - kafka_data:/bitnami/kafka
     networks:
       - linkedin-network
-
     environment:
-      - KAFKA_ENABLE_KRAFT=yes
-      - KAFKA_CFG_NODE_ID=0
-      - KAFKA_CFG_PROCESS_ROLES=controller,broker
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
 
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
 
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
-
-      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
   kafka-ui:
     image: ghcr.io/kafbat/kafka-ui:latest
     container_name: kafka-ui
     ports:
       - "8085:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
     depends_on:
       - kafka
     networks:
       - linkedin-network
-    environment:
-      - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
 
-  notification-db:
-    image: postgres
-    container_name: notification-db
-    environment:
-      - POSTGRES_DB=notificationDB
-      - POSTGRES_USER=user
-      - POSTGRES-PASSWORD=password
-    networks:
-      - linkedin-network
-    volumes:
-      - notification-db-data:/var/lib/postgresql/data
-
-  post-db:
-    image: postgres
-    container_name: post-db
-    environment:
-      - POSTGRES_DB=postDB
-      - POSTGRES_USER=user
-      - POSTGRES-PASSWORD=password
-    networks:
-      - linkedin-network
-    volumes:
-      - post-db-data:/var/lib/postgresql/data
+  # ---------------- DATABASES ----------------
 
   user-db:
     image: postgres
     container_name: user-db
     environment:
-      - POSTGRES_DB=userDB
+      - POSTGRES_DB=user_db
       - POSTGRES_USER=user
-      - POSTGRES-PASSWORD=password
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - user-db-data:/var/lib/postgresql
     networks:
       - linkedin-network
+
+  post-db:
+    image: postgres
+    container_name: post-db
+    environment:
+      - POSTGRES_DB=post_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
     volumes:
-      - user-db-data:/var/lib/postgresql/data
+      - post-db-data:/var/lib/postgresql
+    networks:
+      - linkedin-network
+
+  notification-db:
+    image: postgres
+    container_name: notification-db
+    environment:
+      - POSTGRES_DB=notification_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - notification-db-data:/var/lib/postgresql
+    networks:
+      - linkedin-network
 
   connection-db:
     image: neo4j
@@ -88,69 +86,77 @@ services:
     networks:
       - linkedin-network
 
-  discover-server:
+  # ---------------- DISCOVERY ----------------
+
+  discovery-server:
     image: priyanshuraj354/linkedin-app/discovery-service:latest
     container_name: discovery-server
-    networks:
-      - linkedin-network
     ports:
       - "8761:8761"
-
-
-  notification-service:
-    image: priyanshuraj354/linkedin-app/notification-service:latest
-    container_name: notification-service
     networks:
       - linkedin-network
-    depends_on:
-      - discover-server
-      - notification-db
-      - kafka
 
-  post-service:
-    image: priyanshuraj354/linkedin-app/post-service:latest
-    container_name: post-service
-    networks:
-      - linkedin-network
-    depends_on:
-      - discover-server
-      - post-db
-      - kafka
+  # ---------------- SERVICES ----------------
 
   user-service:
     image: priyanshuraj354/linkedin-app/user-service:latest
     container_name: user-service
-    networks:
-      - linkedin-network
     depends_on:
-      - discover-server
+      - discovery-server
       - user-db
       - kafka
+    networks:
+      - linkedin-network
+
+  post-service:
+    image: priyanshuraj354/linkedin-app/post-service:latest
+    container_name: post-service
+    depends_on:
+      - discovery-server
+      - post-db
+      - kafka
+    networks:
+      - linkedin-network
+
+  notification-service:
+    image: priyanshuraj354/linkedin-app/notification-service:latest
+    container_name: notification-service
+    depends_on:
+      - discovery-server
+      - notification-db
+      - kafka
+    networks:
+      - linkedin-network
 
   connection-service:
     image: priyanshuraj354/linkedin-app/connection-service:latest
     container_name: connection-service
-    networks:
-      - linkedin-network
     depends_on:
-      - discover-server
+      - discovery-server
       - connection-db
       - kafka
+    networks:
+      - linkedin-network
+
+  # ---------------- API GATEWAY ----------------
 
   api-gateway:
     image: priyanshuraj354/linkedin-app/api-gateway:latest
     container_name: api-gateway
+    depends_on:
+      - discovery-server
     networks:
       - linkedin-network
-    depends_on:
-      - discover-server
+
+# ---------------- VOLUMES ----------------
 
 volumes:
-  kafka_data:
-  post-db-data:
   user-db-data:
+  post-db-data:
   notification-db-data:
   connection-db-data:
+
+# ---------------- NETWORK ----------------
 
 networks:
   linkedin-network:

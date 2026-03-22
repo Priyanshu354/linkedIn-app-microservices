@@ -22,7 +22,7 @@ public class PostServiceConsumer {
     private final ConnectionClient connectionClient;
     private final SendNotification sendNotification;
 
-    @KafkaListener(topics = "post-created-event")
+    @KafkaListener(topics = "post-created-topic")
     public void handlePostCreated(PostCreatedEvent postCreatedEvent) {
         log.info("Sending notification: handlePostCreated");
         List<PersonDto> connections = connectionClient.getFirstConnections(postCreatedEvent.getCreatorId());
@@ -33,7 +33,7 @@ public class PostServiceConsumer {
         }
     }
 
-    @KafkaListener(topics = "post-like-event")
+    @KafkaListener(topics = "post-like-topic")
     public void handlePostLike(PostLikeEvent postLikeEvent) {
         log.info("Sending notification: handlePostLike");
 
