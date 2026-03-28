@@ -1,13 +1,12 @@
 package com.priyansu.linkedin.connection_service.service;
 
-import com.priyansu.linkedin.connection_service.auth.UserContextHoler;
+import com.priyansu.linkedin.connection_service.auth.UserContextHolder;
 import com.priyansu.linkedin.connection_service.entity.Person;
 import com.priyansu.linkedin.connection_service.event.AcceptConnectionRequestEvent;
 import com.priyansu.linkedin.connection_service.event.SendConnectionRequestEvent;
 import com.priyansu.linkedin.connection_service.repository.PersonRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +27,7 @@ public class ConnectionService {
 
     public boolean connectionRequest(Long receiverId) {
         log.info("Attempt to request sent to userId: {}", receiverId);
-        Long senderId = UserContextHoler.getCurrentUserId();
+        Long senderId = UserContextHolder.getCurrentUserId();
 
         if(senderId.equals(receiverId)) {
             throw new RuntimeException("can't send connection to your own id");
@@ -40,7 +39,7 @@ public class ConnectionService {
             throw new RuntimeException("Connection request already exist");
         }
 
-        boolean alreadyConnected = personRepository.connectionRequestExist(senderId, receiverId);
+        boolean alreadyConnected = personRepository.alreadyConnected(senderId, receiverId);
 
         if(alreadyConnected) {
             throw new RuntimeException("Already connected");
@@ -81,7 +80,7 @@ public class ConnectionService {
     }
 
     public Boolean rejectRequest(Long senderId) {
-        Long receiverId = UserContextHoler.getCurrentUserId();
+        Long receiverId = UserContextHolder.getCurrentUserId();
 
         boolean alreadyRequested = personRepository.connectionRequestExist(senderId, receiverId);
 

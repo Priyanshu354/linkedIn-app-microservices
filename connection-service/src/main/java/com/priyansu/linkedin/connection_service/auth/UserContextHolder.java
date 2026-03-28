@@ -1,6 +1,6 @@
 package com.priyansu.linkedin.connection_service.auth;
 
-public class UserContextHoler {
+public class UserContextHolder {
 
     private static final ThreadLocal<Long> currentUser = new ThreadLocal<>();
 

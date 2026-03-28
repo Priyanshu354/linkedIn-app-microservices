@@ -9,21 +9,21 @@ spring:
     gateway:
       routes:
         - id: user-service
-          uri: lb://USER-SERVICE
+          uri: ${USER_SERVICE_URI:lb://USER-SERVICE}
           predicates:
             - Path=/api/v1/users/**
           filters:
             - StripPrefix=2
 
         - id: post-service
-          uri: lb://POST-SERVICE
+          uri: ${POSTS_SERVICE_URI:lb://POST-SERVICE}
           predicates:
             - Path=/api/v1/posts/**
           filters:
             - StripPrefix=2
 
         - id: connection-service
-          uri: lb://CONNECTION-SERVICE
+          uri: ${CONNECTIONS_SERVICE_URI:lb://CONNECTION-SERVICE}
           predicates:
             - Path=/api/v1/connections/**
           filters:
@@ -38,3 +38,12 @@ eureka:
 
 jwt:
   secretKey: a;fkdsfirnafsanajganfugrpgj4ng9-pqw4fg-rngjsr08ue;gbs-rep;gus;9watgb
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always

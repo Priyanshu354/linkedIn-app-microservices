@@ -3,9 +3,6 @@ package com.priyansu.linkedin.connection_service.entity;
 import lombok.Data;
 import org.springframework.data.neo4j.core.schema.*;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Node
 @Data
 public class Person {
@@ -18,3 +15,4 @@ public class Person {
 
     private String name;
 }
+

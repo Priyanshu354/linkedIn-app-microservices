@@ -15,7 +15,7 @@ public class UserInterceptor implements HandlerInterceptor {
         String userId = request.getHeader("X-User-Id");
 
         if(userId != null){
-            UserContextHoler.setCurrentUser(Long.valueOf(userId));
+            UserContextHolder.setCurrentUser(Long.valueOf(userId));
         }
         return HandlerInterceptor.super.preHandle(request,response,handler);
     }
@@ -25,6 +25,6 @@ public class UserInterceptor implements HandlerInterceptor {
                                 HttpServletResponse response,
                                 Object handler,
                                 Exception ex) throws Exception {
-        UserContextHoler.clear();
+        UserContextHolder.clear();
     }
 }

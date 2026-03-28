@@ -1,12 +1,11 @@
 package com.priyansu.linkedin.connection_service.controller;
 
-import com.priyansu.linkedin.connection_service.auth.UserContextHoler;
+import com.priyansu.linkedin.connection_service.auth.UserContextHolder;
 import com.priyansu.linkedin.connection_service.entity.Person;
 import com.priyansu.linkedin.connection_service.service.ConnectionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +21,7 @@ public class ConnectionController {
 
     @GetMapping("/first-degree")
     public ResponseEntity<List<Person>> getFirstDegreeConnection() {
-        return ResponseEntity.ok(connectionService.getFirstDegreeConnection(UserContextHoler.getCurrentUserId()));
+        return ResponseEntity.ok(connectionService.getFirstDegreeConnection(UserContextHolder.getCurrentUserId()));
     }
 
     @PostMapping("/request/{userId}")
@@ -31,10 +30,9 @@ public class ConnectionController {
     }
 
     @PostMapping("/accept/{senderUserId}")
-    public ResponseEntity<Boolean> acceptConnection(@PathVariable Long senderUserId,
-                                                 HttpServletRequest request) {
+    public ResponseEntity<Boolean> acceptConnection(@PathVariable Long senderUserId) {
         log.info("accept connection controller hit");
-        Long currentUserId = UserContextHoler.getCurrentUserId();
+        Long currentUserId = UserContextHolder.getCurrentUserId();
         return ResponseEntity.ok(connectionService.acceptConnection(senderUserId, currentUserId));
     }
 
