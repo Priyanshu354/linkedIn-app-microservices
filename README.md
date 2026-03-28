@@ -1,10 +1,10 @@
-# 🚀 LinkedIn-like Scalable Backend (Microservices Architecture)
+# LinkedIn-like Scalable Backend (Microservices Architecture)
 
 A production-grade backend system inspired by LinkedIn, built using **Spring Boot microservices**, **event-driven architecture (Kafka)**, and **centralized JWT authentication at API Gateway**.
 
 ---
 
-## 🧠 Overview
+## Overview
 
 This project demonstrates the design of a **distributed social networking backend**, supporting:
 
