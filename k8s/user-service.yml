@@ -3,9 +3,15 @@ kind: Deployment
 metadata:
   name: user-service
 spec:
+  replicas: 2
   selector:
     matchLabels:
       app: user-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -25,15 +31,42 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: k8s
             - name: DB_USER
-              value: user
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: username
             - name: DB_PASSWORD
-              value: password
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: jwt-secret-key
             - name: DB_SERVICE
               value: user-db
             - name: DB_NAME
               value: user_db
           ports:
             - containerPort: 9011
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 9011
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 9011
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
 
 ---
 
@@ -47,5 +80,3 @@ spec:
   ports:
     - port: 80
       targetPort: 9011
-
-
