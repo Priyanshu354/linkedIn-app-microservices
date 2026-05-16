@@ -46,6 +46,6 @@ spec:
     app: notification-service
   ports:
     - port: 80
-      targetPort: 9010
+      targetPort: 9011
 
 

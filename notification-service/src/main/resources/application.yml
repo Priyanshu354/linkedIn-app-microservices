@@ -5,5 +5,36 @@ spring:
       group-id: ${spring.application.name}
       key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
       properties:
         spring.json.trusted.packages: com.priyanshu.linkedin.*
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      connectionService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+  retry:
+    instances:
+      connectionService:
+        maxAttempts: 3
+        waitDuration: 500ms
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health, info, circuitbreakers
+  endpoint:
+    health:
+      show-details: always

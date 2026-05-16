@@ -9,6 +9,6 @@ public class kafkaConfig {
 
     @Bean
     public NewTopic userCreatedTopic() {
-        return new NewTopic("user-created-topic", 3, (short) 1);
+        return new NewTopic("user-created-topic", 3, (short) 3);
     }
 }

@@ -11,11 +11,11 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic sendConnectionRequestTopic() {
-        return new NewTopic("send-connection-request-topic", 3, (short) 1);
+        return new NewTopic("send-connection-request-topic", 3, (short) 3);
     }
 
     @Bean
     public NewTopic acceptConnectionRequestTopic() {
-        return new NewTopic("accept-connection-request-topic", 3, (short) 1);
+        return new NewTopic("accept-connection-request-topic", 3, (short) 3);
     }
 }
